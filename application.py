@@ -9,6 +9,7 @@ from PIL import Image
 
 class App:
     def __init__(self):
+        self.haar_cascade = cv2.CascadeClassifier('content/recogn_algoritm/haarcascade_frontalface_default.xml')
         self.main_window = tk.Tk()
         self.main_window.geometry("1200x520+350+100")
 
@@ -85,8 +86,28 @@ class App:
         docid = self.document_id_value.get("1.0","end-1c")
         print(f'doctype: "{doctype}", docid: "{docid}"')
 
+        img = self.most_recent_capture_arr
 
-        pil_image = Image.fromarray(self.most_recent_capture_arr)
+        gray_img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+        faces = self.haar_cascade.detectMultiScale(
+            gray_img, scaleFactor=1.05, minNeighbors=1, minSize=(100, 100)
+        )
+        i = 0
+        user_image_maxx = 0
+        user_image_maxy = 0
+        user_image_maxw = 0
+        user_image_maxh = 0
+        user_image_maxi = 0
+        cropped_image = 0
+        for x, y, w, h in faces:
+            if (user_image_maxh < h and user_image_maxw < w):
+                user_image_maxh = h
+                user_image_maxw = w
+                user_image_maxi = i
+                cropped_image = img[y: y + h, x: x + w]
+
+
+        pil_image = Image.fromarray(cropped_image)
         ibed = imgbeddings()
 
         embedding = ibed.to_embeddings(pil_image)
