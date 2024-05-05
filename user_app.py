@@ -1,11 +1,14 @@
+import datetime
+import os
 import tkinter as tk
 import cv2
+from dotenv import load_dotenv
+
 import util
 from PIL import Image, ImageTk
 import psycopg2
 import numpy as np
 from imgbeddings import imgbeddings
-from PIL import Image
 
 class App:
     def __init__(self):
@@ -16,7 +19,6 @@ class App:
         self.login_button_main_window = util.get_button(self.main_window, 'Сделать фото', 'green', self.login_button_click, )
         self.login_button_main_window.place(x=750, y=400)
 
-        from tkinter.ttk import Combobox
         self.document_type_combobox = util.get_combo_box(self.main_window)
         self.document_type_combobox['values'] = ('Тип Документа','Паспорт', 'Студ. билет')
         self.document_type_combobox.current(0)
@@ -30,11 +32,15 @@ class App:
 
         self.add_webcam(self.webcam_label)
 
-        DB_NAME = "face_recognization"
-        DB_USER = "postgres"
-        DB_PASSWORD = "pass"
-        DB_HOST = "localhost"  # or your database host
-        DB_PORT = "5432"  # or your database port
+        self.gates_id = 1
+
+
+        load_dotenv()
+        DB_NAME = os.getenv('DB_NAME')
+        DB_USER = os.getenv('DB_USER')
+        DB_PASSWORD = os.getenv('DB_PASSWORD')
+        DB_HOST = os.getenv('DB_HOST')
+        DB_PORT = os.getenv('DB_PORT')
 
         self.conn = psycopg2.connect(
             dbname=DB_NAME,
@@ -116,7 +122,7 @@ class App:
         cur = self.conn.cursor()
         string_representation = "[" + ", ".join(str(x) for x in embedding[0].tolist()) + "]"
 
-        cur.execute("SELECT picture, embedding FROM pictures;")
+        cur.execute("SELECT * FROM users;")
         rows = cur.fetchall()
 
         # Initialize variables for storing the nearest neighbor information
@@ -125,7 +131,7 @@ class App:
 
         # Calculate the distance or similarity for each row
         for row in rows:
-            picture, stored_embedding = row
+            id, docid, doctype, stored_embedding = row
             stored_embedding = np.array(stored_embedding)  # Convert stored embedding to numpy array
             distance = np.linalg.norm(stored_embedding - embedding[0].tolist())  # Calculate Euclidean distance
             # Alternatively, you can use other similarity metrics such as cosine similarity
@@ -133,11 +139,18 @@ class App:
             # Update nearest neighbor information if the current row has a smaller distance
             if distance < min_distance:
                 # print(distance, min_distance, min_distance-distance)
-                nearest_neighbor = picture
+                nearest_neighbor = id
                 min_distance = distance
 
         if (min_distance < 16):
             print(f"Nearest neighbor: {nearest_neighbor}, distance: {min_distance}")
+            filename = str(datetime.datetime.now()).replace(" ", "_").replace(":", '_').split('.')[0] + ".jpg"
+            target_file_name = "stored-faces-2/" + filename
+            cv2.imwrite(target_file_name, cropped_image)
+            print(id, self.gates_id, filename)
+            cur.execute("INSERT INTO authentifications (users_id, gates_id, picture) VALUES (%s, %s, %s)",
+                        (id, self.gates_id, filename))
+            self.conn.commit()
         else:
             print("No nearest persons, distance: ", min_distance, "closest:", nearest_neighbor)
 
