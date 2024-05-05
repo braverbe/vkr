@@ -128,7 +128,7 @@ class App:
         # Initialize variables for storing the nearest neighbor information
         nearest_neighbor = None
         min_distance = float('inf')
-
+        nearest_embedding = None
         # Calculate the distance or similarity for each row
         for row in rows:
             id, docid, doctype, stored_embedding = row
@@ -139,18 +139,23 @@ class App:
             # Update nearest neighbor information if the current row has a smaller distance
             if distance < min_distance:
                 # print(distance, min_distance, min_distance-distance)
+                nearest_embedding = embedding[0].tolist()
                 nearest_neighbor = id
                 min_distance = distance
 
         if (min_distance < 16):
             print(f"Nearest neighbor: {nearest_neighbor}, distance: {min_distance}")
+
             filename = str(datetime.datetime.now()).replace(" ", "_").replace(":", '_').split('.')[0] + ".jpg"
             target_file_name = "stored-faces-2/" + filename
             cv2.imwrite(target_file_name, cropped_image)
             print(id, self.gates_id, filename)
             cur.execute("INSERT INTO authentifications (users_id, gates_id, picture) VALUES (%s, %s, %s)",
                         (id, self.gates_id, filename))
+            cur.execute("UPDATE users SET embedding = %s WHERE id = %s", (nearest_embedding, id))
             self.conn.commit()
+
+            print()
         else:
             print("No nearest persons, distance: ", min_distance, "closest:", nearest_neighbor)
 
