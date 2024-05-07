@@ -105,10 +105,13 @@ class App:
         docid = self.document_id_value.get("1.0", "end-1c")
         if doctype_num==0 and docid=='':
             msg = util.msg_box("Не указаны данные", "Укажите данные")
+            self.login_user_window.destroy()
         elif doctype_num==0:
             msg = util.msg_box("Неправильный тип документа", "Укажите тип документа")
+            self.login_user_window.destroy()
         elif docid=='':
             msg = util.msg_box("Неправильный id пользователя", "Укажите id пользователя")
+            self.login_user_window.destroy()
         else:
             if doctype_num == 1:
                 doctype = "passport"
@@ -159,6 +162,7 @@ class App:
                 self.conn.commit()
                 msg = util.msg_box("Добро пожаловать",
                                    "Заходите!")
+                self.login_user_window.destroy()
 
 
 
@@ -189,10 +193,13 @@ class App:
         docid = self.document_id_value.get("1.0", "end-1c")
         if doctype_num == 0 and docid == '':
             msg = util.msg_box("Не указаны данные", "Укажите данные")
+            self.register_user_window.destroy()
         elif doctype_num == 0:
             msg = util.msg_box("Неправильный тип документа", "Укажите тип документа")
+            self.register_user_window.destroy()
         elif docid == '':
             msg = util.msg_box("Неправильный id пользователя", "Укажите id пользователя")
+            self.register_user_window.destroy()
         else:
             if doctype_num == 1:
                 doctype = "passport"
@@ -240,6 +247,7 @@ class App:
                 self.conn.commit()
                 msg = util.msg_box("Добро пожаловать",
                                    "Заходите!")
+                self.register_user_window.destroy()
 
     def add_img_to_label(self, label):
         imgtk = ImageTk.PhotoImage(image=self.most_recent_capture_pil)
