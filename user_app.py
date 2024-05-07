@@ -88,10 +88,6 @@ class App:
 
         self.add_img_to_label(self.capture_label)
 
-        doctype = self.document_type_combobox.current()
-        docid = self.document_id_value.get("1.0","end-1c")
-        print(f'doctype: "{doctype}", docid: "{docid}"')
-
         img = self.add_new_user_capture
 
         gray_img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
@@ -116,8 +112,18 @@ class App:
 
         cur = self.conn.cursor()
         string_representation = "[" + ", ".join(str(x) for x in embedding[0].tolist()) + "]"
+        doctype_num = self.document_type_combobox.current()
+        docid = self.document_id_value.get("1.0", "end-1c")
+        doctype = None
+        if doctype_num=='0' and docid=='':
+            cur.execute("SELECT * FROM users;")
+        else:
+            if doctype_num == 1:
+                doctype = "passport"
+            elif doctype_num == 2:
+                doctype = "studID"
+            cur.execute("SELECT * FROM users WHERE doctype = %s AND docid = %s", (doctype, docid))
 
-        cur.execute("SELECT * FROM users;")
         rows = cur.fetchall()
 
         # Initialize variables for storing the nearest neighbor information
@@ -138,7 +144,7 @@ class App:
                 nearest_neighbor = id
                 min_distance = distance
 
-        if (min_distance < 16):
+        if (min_distance < 10):
             print(f"Nearest neighbor: {nearest_neighbor}, distance: {min_distance}")
 
             filename = str(datetime.datetime.now()).replace(" ", "_").replace(":", '_').split('.')[0] + ".jpg"
@@ -150,10 +156,14 @@ class App:
             cur.execute("UPDATE users SET embedding = %s WHERE id = %s", (nearest_embedding, id))
             self.conn.commit()
 
-            print()
+            msg = util.msg_box("Добро пожаловать",
+                               "Заходите!")
+            self.login_user_window.destroy()
         else:
             print("No nearest persons, distance: ", min_distance, "closest:", nearest_neighbor)
-
+            msg = util.msg_box("Ошибка",
+                               "Извините, но пользователя с похожим фото лица не найдено! Попробуйте снова или обратитесь к администратору")
+            self.login_user_window.destroy()
         cur.close()
 
 
