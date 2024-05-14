@@ -5,7 +5,7 @@ import cv2
 import requests
 from dotenv import load_dotenv
 from imgbeddings import imgbeddings
-
+from minio import Minio
 import util
 from PIL import Image, ImageTk
 import psycopg2
@@ -46,6 +46,13 @@ class App:
             password=DB_PASSWORD,
             host=DB_HOST,
             port=DB_PORT
+        )
+
+        self.client = Minio(
+            os.getenv('MINIO_HOSTPORT'),
+            access_key=os.getenv('MINIO_ACCESS_KEY'),
+            secret_key=os.getenv('MINIO_SECRETKEY'),
+            secure=False
         )
 
     def add_webcam(self, label):
@@ -156,6 +163,10 @@ class App:
                 target_file_name = "stored-faces-2/" + filename
                 cv2.imwrite(target_file_name, cropped_image)
 
+                self.client.fput_object(
+                    "images", filename, target_file_name,
+                )
+
                 cur.execute("INSERT INTO authentifications (users_id, gates_id, picture) VALUES (%s, %s, %s)",
                             (id, self.gates_id, filename))
                 cur.execute("UPDATE users SET embedding = %s WHERE id = %s", (embedding[0].tolist(), id))
@@ -239,6 +250,9 @@ class App:
                 filename = str(datetime.datetime.now()).replace(" ", "_").replace(":", '_').split('.')[0] + ".jpg"
                 target_file_name = "stored-faces-2/" + filename
                 cv2.imwrite(target_file_name, cropped_image)
+                self.client.fput_object(
+                    "images", filename, target_file_name,
+                )
                 cur.execute("INSERT INTO users (docid, doctype, embedding) VALUES (%s, %s, %s)", (docid, doctype, embedding[0].tolist()))
                 self.conn.commit()
                 cur.execute("SELECT id FROM users WHERE doctype = %s AND docid = %s", (doctype, docid))
