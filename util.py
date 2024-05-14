@@ -3,7 +3,7 @@ import pickle
 
 import tkinter as tk
 from tkinter import messagebox
-from tkinter.ttk import Combobox
+from tkinter.ttk import Combobox, Style
 # import face_recognition
 
 
@@ -44,7 +44,13 @@ def get_entry_text(window, height=2, width=15):
 
 
 def get_combo_box(window):
-    combo=Combobox(window, font=("sans-serif", 21), state='readonly')
+    combo_style = Style()
+    combo_style.theme_use('clam')  # Choose one of the available themes
+
+    # Define a custom style for the combo box
+    combo_style.configure('Custom.TCombobox', font=("Arial", 12), background='#f0f0f0', foreground='#333333', fieldbackground='#f0f0f0', selectbackground='#e0e0e0', selectforeground='#333333', arrowsize=12)
+
+    combo = Combobox(window, style='Custom.TCombobox', state='readonly', width=20)
     return combo
 
 
