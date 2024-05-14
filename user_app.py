@@ -2,6 +2,7 @@ import datetime
 import os
 import tkinter as tk
 import cv2
+import requests
 from dotenv import load_dotenv
 
 import util
@@ -115,13 +116,14 @@ class App:
         doctype_num = self.document_type_combobox.current()
         docid = self.document_id_value.get("1.0", "end-1c")
         doctype = None
-        if doctype_num=='0' and docid=='':
+        if doctype_num == 0 and docid == '':
             cur.execute("SELECT * FROM users;")
         else:
             if doctype_num == 1:
                 doctype = "passport"
             elif doctype_num == 2:
                 doctype = "studID"
+
             cur.execute("SELECT * FROM users WHERE doctype = %s AND docid = %s", (doctype, docid))
 
         rows = cur.fetchall()
@@ -158,6 +160,7 @@ class App:
 
             msg = util.msg_box("Добро пожаловать",
                                "Заходите!")
+            response = requests.post(f"http://127.0.0.1:5000/?light=light{self.gates_id}&color=green")
             self.login_user_window.destroy()
         else:
             print("No nearest persons, distance: ", min_distance, "closest:", nearest_neighbor)

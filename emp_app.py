@@ -2,6 +2,7 @@ import datetime
 import os
 import tkinter as tk
 import cv2
+import requests
 from dotenv import load_dotenv
 from imgbeddings import imgbeddings
 
@@ -154,15 +155,17 @@ class App:
                 filename = str(datetime.datetime.now()).replace(" ", "_").replace(":", '_').split('.')[0] + ".jpg"
                 target_file_name = "stored-faces-2/" + filename
                 cv2.imwrite(target_file_name, cropped_image)
-                print(id, self.gates_id, filename)
-                print(embedding[0].tolist(), id)
+
                 cur.execute("INSERT INTO authentifications (users_id, gates_id, picture) VALUES (%s, %s, %s)",
                             (id, self.gates_id, filename))
                 cur.execute("UPDATE users SET embedding = %s WHERE id = %s", (embedding[0].tolist(), id))
                 self.conn.commit()
                 msg = util.msg_box("Добро пожаловать",
                                    "Заходите!")
+                response = requests.post(f"http://127.0.0.1:5000/?light=light{self.gates_id}&color=green")
                 self.login_user_window.destroy()
+
+
 
 
 
